@@ -2,8 +2,8 @@ package ohc
 
 import language.higherKinds
 
-trait Struct[Allocator <: AllocatorDefintion[Allocator]] extends Any
-trait StructDef[T[X <: AllocatorDefintion[X]] <: Struct[X]] extends Any {
-  def apply[A <: AllocatorDefintion[A]](pointer: Long): T[A]
+trait Struct[Allocator <: AllocatorDefintion] extends Any
+trait StructDef[T[X <: AllocatorDefintion] <: Struct[X]] extends Any {
+  def apply[A <: AllocatorDefintion](pointer: Long): T[A]
   def size: Long
 }

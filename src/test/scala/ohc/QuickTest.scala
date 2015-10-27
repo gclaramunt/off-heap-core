@@ -8,7 +8,7 @@ import shapeless.test.illTyped
  */
 object QuickTest extends App {
 
-  class Point[Allocator <: AllocatorDefintion[Allocator]](val pointer: Long) extends AnyVal with Struct[Allocator] {
+  class Point[Allocator <: AllocatorDefintion](val pointer: Long) extends AnyVal with Struct[Allocator] {
     def x(implicit allocator: Allocator) = allocator.memory.getInt(pointer)
     def x_=(v: Int)(implicit allocator: Allocator) = allocator.memory.setInt(pointer, v)
     def y(implicit allocator: Allocator) = allocator.memory.getInt(pointer + 4)
@@ -16,10 +16,10 @@ object QuickTest extends App {
   }
   object Point {
     implicit val PointStruct = new StructDef[Point] {
-      def apply[A <: AllocatorDefintion[A]](pointer) = new Point[A](pointer)
+      def apply[A <: AllocatorDefintion](pointer) = new Point[A](pointer)
       def size: Long = 8
     }
-    def apply[AD <: AllocatorDefintion[AD]](x: Int, y: Int)(implicit alloc: AD): Point[AD] = {
+    def apply(x: Int, y: Int)(implicit alloc: AllocatorDefintion): Point[alloc.Self] = {
       val res = alloc.allocate[Point]
       res.x = x
       res.y = y
