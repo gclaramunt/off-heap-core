@@ -20,8 +20,8 @@ class StructMacros(val c: Context) {
       case _ => false
     }
     val res = annottees match {
-      case Seq(clazz@ClassDef(_, _, _, _)) =>
-        val (c, o) = implementClassAndCompanion(clazz, q"object ${clazz.symbol.name.toTermName}")
+      case Seq(clazz@ClassDef(_, nme, _, _)) =>
+        val (c, o) = implementClassAndCompanion(clazz, q"object ${nme.toTermName}")
         q"{$c; $o}"
 
       case Seq(clazz@ClassDef(_, _, _, _), companion@ModuleDef(_, _, _)) =>
@@ -42,7 +42,6 @@ class StructMacros(val c: Context) {
 
     //check that one of the tparams is an AllocatorDefinition
     if (tparams.size != 1) c.abort(c.enclosingPosition, "A structure must only define one type parameter such as T <: Allocator")
-    println(showRaw(tparams))
     val allocatorGenericParam = tparams.head match {
       case t@TypeDef(_, tparamName, _, TypeBoundsTree(lo, AppliedTypeTree(tpe, List(Ident(tparamName2))))) if {
           val typedTpe = c.typecheck(tpe, c.TYPEmode)
@@ -66,10 +65,9 @@ class StructMacros(val c: Context) {
         if (TypeSize.isDefinedAt(paramTpe)) {
           val typeSize = TypeSize(paramTpe)
           val position = offset
-          val accessors = q"def $name(implicit a: $allocatorGenericParam) = a.memory.${TermName("get" + tpe)}(pointer + $position)" +:
-          (if (mods.hasFlag(Flag.MUTABLE))
-            Seq(q"def ${TermName(name + "_=")}(v: $tpe)(implicit a: $allocatorGenericParam) = a.memory.${TermName("set" + tpe)}(pointer + $position, v)")
-           else Seq.empty)
+          val setterMods = if (mods.hasFlag(Flag.MUTABLE)) NoMods else Modifiers(NoFlags, tpname)
+          val accessors = q"def $name(implicit a: $allocatorGenericParam) = a.memory.${TermName("get" + tpe)}(_ptr + $position)" +:
+            Seq(q"$setterMods def ${TermName(name + "_=")}(v: $tpe)(implicit a: $allocatorGenericParam) = a.memory.${TermName("set" + tpe)}(_ptr + $position, v)")
           (offset + typeSize, accum ++ accessors)
         } else {
           c.error(t.pos, "Unsized type " + tpe)
@@ -83,7 +81,7 @@ class StructMacros(val c: Context) {
         tpe =:= definitions.ObjectTpe || tpe =:= definitions.AnyRefTpe
       }
       q"""
-        $mods class $tpname[$allocatorGenericParam <: _root_.ohc.Allocator[$allocatorGenericParam]](val pointer: Long) extends ..$totalParents {
+        $mods class $tpname[$allocatorGenericParam <: _root_.ohc.Allocator[$allocatorGenericParam]](val _ptr: Long) extends ..$totalParents {
           ..${gettersAndSetters}
 
           ..$stats
