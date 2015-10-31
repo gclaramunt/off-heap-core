@@ -19,6 +19,11 @@ scalacOptions ++= Seq(
 fork := true
 
 libraryDependencies ++= Seq(
+  "org.scala-lang" % "scala-reflect" % scalaVersion.value,
   "org.scala-lang.modules" %% "scala-java8-compat" % "0.5.0",
   "com.chuusai" %% "shapeless" % "2.2.5"
 )
+
+addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0-M5" cross CrossVersion.full)
+
+initialCommands in Compile in console := "import ohc._"

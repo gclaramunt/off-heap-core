@@ -1,27 +1,25 @@
 package ohc
 
-import language.{higherKinds, existentials }
-
 import shapeless.test.illTyped
 /**
  * Quick example using the stack allocator
  */
 object QuickTest extends App {
 
-  class Point[Allocator <: AllocatorDefintion](val pointer: Long) extends AnyVal with Struct[Allocator] {
-    def x(implicit allocator: Allocator) = allocator.memory.getInt(pointer)
-    def x_=(v: Int)(implicit allocator: Allocator) = allocator.memory.setInt(pointer, v)
-    def y(implicit allocator: Allocator) = allocator.memory.getInt(pointer + 4)
-    def y_=(v: Int)(implicit allocator: Allocator) = allocator.memory.setInt(pointer + 4, v)
+  class Point[A <: Allocator[A]](val pointer: Long) extends AnyVal with Struct[A] {
+    def x(implicit allocator: A) = allocator.memory.getInt(pointer)
+    def x_=(v: Int)(implicit allocator: A) = allocator.memory.setInt(pointer, v)
+    def y(implicit allocator: A) = allocator.memory.getInt(pointer + 4)
+    def y_=(v: Int)(implicit allocator: A) = allocator.memory.setInt(pointer + 4, v)
   }
   object Point {
     implicit val PointStruct = new StructDef[Point] {
-      def apply[A <: AllocatorDefintion](pointer) = new Point[A](pointer)
+      def apply[A <: Allocator[A]](pointer) = new Point[A](pointer)
       def size: Long = 8
     }
-    def apply(x: Int, y: Int)(implicit alloc: AllocatorDefintion): Point[alloc.Self] = {
+    def apply[A <: Allocator[A]](x: Int, y: Int)(implicit alloc: A): Point[A] = {
       val res = alloc.allocate[Point]
-      res.x = x
+      res.x_=(x)
       res.y = y
       res
     }
