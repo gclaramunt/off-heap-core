@@ -11,10 +11,10 @@ final class Stack(val memory: Memory) {
   private[this] var memoryOffset: Long = 0
 
   sealed trait StackAllocator extends Allocator[StackAllocator] {
-    def allocate[S[X <: Allocator[X]] <: Struct[X]](implicit structDef: StructDef[S]): S[StackAllocator] = {
-      if (memory.size - memoryOffset < structDef.size) throw new IllegalStateException(s"Not enough memory. Used ${memoryOffset}/${memory.size}, required ${structDef.size}")
-      val res = structDef[StackAllocator](memoryOffset)
-      memoryOffset += structDef.size
+    def allocate(size: Long): Long = {
+      if (memory.size - memoryOffset < size) throw new IllegalStateException(s"Not enough memory. Used ${memoryOffset}/${memory.size}, required $size")
+      val res = memoryOffset
+      memoryOffset += size
       res
     }
     val memory = Stack.this.memory

@@ -67,7 +67,7 @@ class StructMacros(val c: Context) {
           val position = offset
           val setterMods = if (mods.hasFlag(Flag.MUTABLE)) NoMods else Modifiers(NoFlags, tpname)
           val accessors = q"def $name(implicit a: $allocatorGenericParam) = a.memory.${TermName("get" + tpe)}(_ptr + $position)" +:
-            Seq(q"$setterMods def ${TermName(name + "_=")}(v: $tpe)(implicit a: $allocatorGenericParam) = a.memory.${TermName("set" + tpe)}(_ptr + $position, v)")
+          Seq(q"$setterMods def ${TermName(name + "_=")}(v: $tpe)(implicit a: $allocatorGenericParam) = a.memory.${TermName("set" + tpe)}(_ptr + $position, v)")
           (offset + typeSize, accum ++ accessors)
         } else {
           c.error(t.pos, "Unsized type " + tpe)
@@ -95,7 +95,7 @@ class StructMacros(val c: Context) {
 
       val fieldAssignations = params map (p => q"""res.${TermName(p.name.decodedName.toString + "_=")}(${p.name})""")
       val applyBody = q"""
-        val res = alloc.allocate[${tpname.toTypeName}]
+        val res = $tpname()
         ..$fieldAssignations
         res"""
 
@@ -104,14 +104,19 @@ class StructMacros(val c: Context) {
       val unapplyMethod = q"""def unapply[A <: _root_.ohc.Allocator[A]](o: ${tpname.toTypeName}[A])(implicit a: A) = Some((..$paramNames))"""
 
 
+      val newParents = tq"_root_.ohc.StructDef[${tpname.toTypeName}]" +: parents.filterNot { t =>
+        val tpe = c.typecheck(t, c.TYPEmode, silent = true).tpe
+        tpe =:= definitions.ObjectTpe || tpe =:= definitions.AnyRefTpe
+      }
+
       q"""
-      $mods object $tpname extends {..$earlydefns} with ..$parents {
+      $mods object $tpname extends {..$earlydefns} with ..$newParents {
         ..$stats
 
-        implicit val ${TermName(tpname + "Struct")} = new StructDef[${tpname.toTypeName}] {
-          def apply[A <: _root_.ohc.Allocator[A]](pointer: Long): ${tpname.toTypeName}[A] = new ${tpname.toTypeName}[A](pointer)
-          def size: Long = $totalSize
-        }
+        def apply[A <: _root_.ohc.Allocator[A]]()(implicit allocator: A): ${tpname.toTypeName}[A] = new ${tpname.toTypeName}[A](allocator allocate size)
+        def size: Long = $totalSize
+
+        implicit val structDef = this
 
         $applyMethod
         $unapplyMethod

@@ -3,7 +3,7 @@ package ohc
 import language.higherKinds
 
 trait StructDef[T[X <: Allocator[X]] <: Struct[X]] extends Any {
-  def apply[A <: Allocator[A]](pointer: Long): T[A]
+  def apply[A <: Allocator[A]]()(implicit allocator: A): T[A]
   def size: Long
 }
 
@@ -14,8 +14,8 @@ trait Struct[A <: Allocator[A]] extends Any {
 object Struct {
 
   implicit class StructOps[A <: Allocator[A], S[X <: Allocator[X]] <: Struct[X]](val s: S[A]) extends AnyVal {
-    def cloneIn[B <: Allocator[B]](implicit a: A, b: B, sd: StructDef[S]): S[B] = {
-      val res = b.allocate[S]
+    @inline def cloneIn[B <: Allocator[B]](b: B)(implicit a: A, sd: StructDef[S]): S[B] = {
+      val res = sd.apply()(b)
       a.memory.copyTo(b.memory, s._ptr, sd.size, res._ptr)
       res
     }
