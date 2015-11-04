@@ -11,11 +11,11 @@ final class Stack(val memory: Memory) {
   private[this] var memoryOffset: Long = 0
 
   sealed trait StackAllocator extends Allocator[StackAllocator] {
-    def allocate(size: Long): Long = {
+    def allocate(size: Long): Long @@ StackAllocator = {
       if (memory.size - memoryOffset < size) throw new IllegalStateException(s"Not enough memory. Used ${memoryOffset}/${memory.size}, required $size")
       val res = memoryOffset
       memoryOffset += size
-      res
+      res.asInstanceOf[Long @@ StackAllocator]
     }
     val memory = Stack.this.memory
   }

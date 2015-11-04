@@ -9,6 +9,6 @@ trait Allocator[Self <: Allocator[Self]] {
   /**
    * Requests this allocator for an amount of memory. It returns the memory address point to the beggining of such block.
    */
-  def allocate(size: Long): Long
+  def allocate(size: Long): Long @@ Self
   def memory: Memory
 }

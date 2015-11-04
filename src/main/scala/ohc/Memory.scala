@@ -16,7 +16,7 @@ trait Memory extends Any {
   def getFloat(pointer: Long): Float
   def getDouble(pointer: Long): Double
   def getBytes(pointer: Long, bytes: ByteBuffer)
-  def getBytes(pointer: Long, bytes: Array[Byte])
+  def getBytes(pointer: Long, bytes: scala.Array[Byte])
 
   def setByte(pointer: Long, value: Byte): Unit
   def setShort(pointer: Long, value: Short): Unit
@@ -25,7 +25,7 @@ trait Memory extends Any {
   def setFloat(pointer: Long, value: Float): Unit
   def setDouble(pointer: Long, value: Double): Unit
   def setBytes(pointer: Long, bytes: ByteBuffer): Unit
-  def setBytes(pointer: Long, bytes: Array[Byte]): Unit
+  def setBytes(pointer: Long, bytes: scala.Array[Byte]): Unit
 
   /**
    * sets to 0 the specified memory.
@@ -55,7 +55,7 @@ final class ByteBufferMemory(val byteBuffer: ByteBuffer) extends AnyVal with Mem
   @inline def getLong(pointer) = byteBuffer.getLong(pointer.toInt)
   @inline def getFloat(pointer) = byteBuffer.getFloat(pointer.toInt)
   @inline def getDouble(pointer) = byteBuffer.getDouble(pointer.toInt)
-  @inline def getBytes(pointer, bytes: Array[Byte]) = byteBuffer.get(bytes, pointer.toInt, bytes.length)
+  @inline def getBytes(pointer, bytes: scala.Array[Byte]) = byteBuffer.get(bytes, pointer.toInt, bytes.length)
   @inline def getBytes(pointer, bytes: ByteBuffer) = {
     byteBuffer.position(pointer.toInt).limit(bytes.remaining)
     bytes.put(byteBuffer)
@@ -68,7 +68,7 @@ final class ByteBufferMemory(val byteBuffer: ByteBuffer) extends AnyVal with Mem
   @inline def setLong(pointer, value) = byteBuffer.putLong(pointer.toInt, value)
   @inline def setFloat(pointer, value) = byteBuffer.putFloat(pointer.toInt, value)
   @inline def setDouble(pointer, value) = byteBuffer.putDouble(pointer.toInt, value)
-  @inline def setBytes(pointer, bytes: Array[Byte]) = byteBuffer.put(bytes, pointer.toInt, bytes.length)
+  @inline def setBytes(pointer, bytes: scala.Array[Byte]) = byteBuffer.put(bytes, pointer.toInt, bytes.length)
   @inline def setBytes(pointer, bytes: ByteBuffer) = {
     byteBuffer.position(pointer.toInt)
     byteBuffer.put(bytes)
@@ -104,7 +104,7 @@ final class DirectMemory(val size: Long) extends Memory {
   @inline def getLong(pointer) = unsafe.getLong(memAddr + pointer)
   @inline def getFloat(pointer) = unsafe.getFloat(memAddr + pointer)
   @inline def getDouble(pointer) = unsafe.getDouble(memAddr + pointer)
-  @inline def getBytes(pointer, bytes: Array[Byte]) = directBuffer.getBytes(pointer, bytes)
+  @inline def getBytes(pointer, bytes: scala.Array[Byte]) = directBuffer.getBytes(pointer, bytes)
   @inline def getBytes(pointer, bytes: ByteBuffer) = directBuffer.getBytes(pointer, bytes)
 
   @inline def setByte(pointer, value) = unsafe.putByte(memAddr + pointer, value)
@@ -113,7 +113,7 @@ final class DirectMemory(val size: Long) extends Memory {
   @inline def setLong(pointer, value) = unsafe.putLong(memAddr + pointer, value)
   @inline def setFloat(pointer, value) = unsafe.putFloat(memAddr + pointer, value)
   @inline def setDouble(pointer, value) = unsafe.putDouble(memAddr + pointer, value)
-  @inline def setBytes(pointer, bytes: Array[Byte]) = directBuffer.setBytes(pointer, bytes)
+  @inline def setBytes(pointer, bytes: scala.Array[Byte]) = directBuffer.setBytes(pointer, bytes)
   @inline def setBytes(pointer, bytes: ByteBuffer) = directBuffer.setBytes(pointer, bytes)
 
   @inline def clear(offset, bytes) = unsafe.setMemory(memAddr + offset, bytes, 0)

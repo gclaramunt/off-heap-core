@@ -1,6 +1,8 @@
 package ohc
 
 import ohc.annotation.struct
+import shapeless.syntax.singleton._
+import shapeless.tag._
 
 object StructMacroTest {
 
@@ -26,6 +28,9 @@ object StructMacroTest {
 
     val pixel = Pixel(0, 0, 0)
 
-    val p2 = new Point[stack.StackAllocator](2323233l)
+    val p2 = new Point(2323233l.asInstanceOf[Long @@ stack.StackAllocator])
+
+
+    Array(100, Pixel)
   }
 }

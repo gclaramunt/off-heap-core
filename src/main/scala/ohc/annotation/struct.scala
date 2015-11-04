@@ -81,7 +81,7 @@ class StructMacros(val c: Context) {
         tpe =:= definitions.ObjectTpe || tpe =:= definitions.AnyRefTpe
       }
       q"""
-        $mods class $tpname[$allocatorGenericParam <: _root_.ohc.Allocator[$allocatorGenericParam]](val _ptr: Long) extends ..$totalParents {
+        $mods class $tpname[$allocatorGenericParam <: _root_.ohc.Allocator[$allocatorGenericParam]](val _ptr: _root_.shapeless.tag.@@[Long, $allocatorGenericParam]) extends ..$totalParents {
           ..${gettersAndSetters}
 
           ..$stats
@@ -114,6 +114,7 @@ class StructMacros(val c: Context) {
         ..$stats
 
         def apply[A <: _root_.ohc.Allocator[A]]()(implicit allocator: A): ${tpname.toTypeName}[A] = new ${tpname.toTypeName}[A](allocator allocate size)
+        def apply[A <: _root_.ohc.Allocator[A]](ptr: _root_.shapeless.tag.@@[Long, A]): ${tpname.toTypeName}[A] = new ${tpname.toTypeName}[A](ptr)
         def size: Long = $totalSize
 
         implicit val structDef = this

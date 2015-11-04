@@ -1,9 +1,15 @@
 package ohc
 
 import language.higherKinds
+import shapeless.tag._
 
 trait StructDef[T[X <: Allocator[X]] <: Struct[X]] extends Any {
   def apply[A <: Allocator[A]]()(implicit allocator: A): T[A]
+
+  /**
+   * Low level initializer given a memory address.
+   */
+  def apply[A <: Allocator[A]](ptr: Long @@ A): T[A]
   def size: Long
 }
 
