@@ -1,7 +1,6 @@
 package ohc
 
 import shapeless.test.illTyped
-import shapeless.Nat._
 import shapeless.tag._
 /**
  * Quick example using the stack allocator
@@ -70,7 +69,8 @@ object QuickTest extends App {
       res += (if (math.random > 0.5) p.x else p.y)
       val arr = Array(100, Point)
 
-      val p2 = Point(arr(13))
+      val p2 = arr(13)
+      illTyped("Point(arr(1000002))")
       p2.x = randomInt()
       p2.y = randomInt()
       res += (if (math.random > 0.5) p2.x else p2.y)
