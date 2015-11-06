@@ -11,7 +11,7 @@ object Nat {
   /**
    * General definition of a natural number. This is an universal trait, since implementations will be value classes erasing to just int.
    */
-  trait Nat extends Any { self =>
+  trait Nat { self =>
     /**
      * A Self type useful for path dependant natural's usage
      */
@@ -20,24 +20,15 @@ object Nat {
      * The constant that this natural represents
      */
     type Num <: Int
-    /**
-     * Obtain the constant.
-     */
-    def apply(): Int
   }
-  object Nat {
-    type Aux[N <: Int] = Nat { type Num = N }
+  /**
+   * Type representing instances of Nat. Normally you shouldn't be concerned by this type
+   */
+  trait NatInstance[T <: Int] extends Nat {
+    type Num = T
+    type N = this.type
   }
   implicit def int2Nat(num: Int): Nat = macro NatWhiteboxMacros.implicitNat
-
-  /**
-   * Value class implementation of Nat. Instances are created via the macro int2Nat
-   */
-  private[Nat] class NatImpl[T <: Int](val n: Int) extends Nat {
-    type N = this.type
-    type Num = T
-    def apply() = n
-  }
 
   trait Eq[N1 <: Nat, N2 <: Nat]
   
@@ -52,6 +43,9 @@ object Nat {
   implicit def greaterThan[N1 <: Nat, N2 <: Nat]: GT[N1, N2] = macro NatBlackboxMacros.greaterThan[N1, N2]
   implicit def greaterEq[N1 <: Nat, N2 <: Nat]: GE[N1, N2] = macro NatBlackboxMacros.greaterEq[N1, N2]
 
+  /**
+   * Instances of this class are provided via the macro materializeToInt. You should not need instantiate it by hand.
+   */
   class ToInt[N <: Nat](val num: Int) extends AnyVal { def apply() = num }
   implicit def materializeToInt[N <: Nat]: ToInt[N] = macro NatBlackboxMacros.materializeToInt[N]
 
@@ -59,16 +53,17 @@ object Nat {
   class NatWhiteboxMacros(override val c: scala.reflect.macros.whitebox.Context) extends NatBlackboxMacros(c) {
     import c.universe._
 
-    def implicitNat(num: Tree): Tree = q"new $NatImplSym[${num.tpe}]($num)"
-
+    def implicitNat(num: Tree): Tree = q"null.asInstanceOf[$NatInstanceSym[${num.tpe}]]"
   }
   class NatBlackboxMacros(val c: scala.reflect.macros.blackbox.Context) {
     import c.universe._
-    val NatImplSym = symbolOf[NatImpl[_]]
+    val NatSym = symbolOf[Nat]
+    val NatInstanceSym = symbolOf[NatInstance[_]]
     val ToIntSym = symbolOf[ToInt[_]]
 
     def getToInt(nat: Type): (Int, Tree) = {
-      val numberTpe = NatImplSym.info.member(TypeName("Num")).infoIn(nat)
+      val numberTpe = nat.member(TypeName("Num")).infoIn(nat)
+//      println(numberTpe)
       val number = numberTpe.toString.stripPrefix("Int(").stripSuffix(")").toInt
       number -> q"new $ToIntSym[$nat]($number)"
     }
