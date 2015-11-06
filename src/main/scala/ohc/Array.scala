@@ -5,12 +5,13 @@ import support.Nat._
 import shapeless.tag._
 
 class Array[A <: Allocator[A], S[X <: Allocator[X]] <: Struct[X], N <: Nat](val _ptr: Long) extends AnyVal with Struct[A] {
-  def offset(m: Nat)(implicit ev: m.N LT N, mDim: ToInt[m.N], sd: StructDef[S]): Long @@ A = (_ptr + sd.size * mDim()).asInstanceOf[Long @@ A]
+  type Length = N
+  def offset(m: Nat)(implicit ev: m.N LT Length, mDim: ToInt[m.N], sd: StructDef[S]): Long @@ A = (_ptr + sd.size * mDim()).asInstanceOf[Long @@ A]
   /**
    * Syntactic rewrite to StructDef(arr.offset(m)). See offset.
    */
   def apply(m: Nat)(implicit sd: StructDef[S]): S[A] = macro support.ArrayMacros.getStruct
-  def length(implicit nDim: ToInt[N]) = nDim()
+  def length(implicit nDim: ToInt[Length]) = nDim()
 }
 
 

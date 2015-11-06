@@ -64,8 +64,10 @@ object Nat {
     def getToInt(nat: Type): (Int, Tree) = {
       val numberTpe = nat.member(TypeName("Num")).infoIn(nat)
 //      println(numberTpe)
-      val number = numberTpe.toString.stripPrefix("Int(").stripSuffix(")").toInt
-      number -> q"new $ToIntSym[$nat]($number)"
+      try {
+        val number = numberTpe.toString.stripPrefix("Int(").stripSuffix(")").toInt
+        number -> q"new $ToIntSym[$nat]($number)"
+      } catch { case ne: NumberFormatException => c.abort(c.enclosingPosition, s"Nat[$nat] of unkown size")}
     }
 
     def materializeToInt[N <: Nat](implicit nTypeTag: WeakTypeTag[N]): Tree = getToInt(nTypeTag.tpe)._2
