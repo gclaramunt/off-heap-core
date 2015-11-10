@@ -2,6 +2,7 @@ package ohc
 
 import language.{ higherKinds, experimental }, experimental.macros
 import support.Nat._
+import support.DefaultsTo
 import shapeless.tag._
 
 class Array[A <: Allocator[A], S[X <: Allocator[X]] <: Struct[X], N <: Nat](val _ptr: Long) extends AnyVal with Struct[A] {
@@ -10,7 +11,8 @@ class Array[A <: Allocator[A], S[X <: Allocator[X]] <: Struct[X], N <: Nat](val 
   /**
    * Syntactic rewrite to StructDef(arr.offset(m)). See offset.
    */
-  def apply(lessThan: LessThan[_])(implicit sd: StructDef[S]): S[A] = macro support.ArrayMacros.getStruct
+  def apply(lessThan: LessThan[_])(implicit sd: StructDef[S]): S[A] = macro support.ArrayMacros.getStructFromLessThan
+  def apply(index: Int)(implicit sd: StructDef[S]): S[A] = macro support.ArrayMacros.getStructFromIndex
   def length(implicit nDim: ToInt[Length]) = nDim()
 }
 
