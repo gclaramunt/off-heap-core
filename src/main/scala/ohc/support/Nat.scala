@@ -92,10 +92,18 @@ object Nat {
     def GE[N1 <: Nat, N2 <: Nat](implicit n1: WeakTypeTag[N1], n2: WeakTypeTag[N2]): Tree = compare(n1.tpe, n2.tpe, (_ >= _), "<")
 
     def int2LessThan[N <: Nat](i: Tree)(implicit nTypeTag: WeakTypeTag[N]): Tree = {
-      val max = getToInt(nTypeTag.tpe)._1
+      val n = c.eval(c.Expr[Int](c untypecheck i))
+      //if the top bound is known, use it, if it is nothing (as in no preference) produce a upper bound equal to the number + 1
+      val (max, maxTpe) = if (nTypeTag.tpe == definitions.NothingTpe) {
+        val topBound = c.typecheck(Literal(Constant(n + 1))).tpe
+        (n + 1) -> c.typecheck(tq"$NatInstanceSym[$topBound]", c.TYPEmode).tpe
+      } else getToInt(nTypeTag.tpe)._1 -> nTypeTag.tpe
       try {
-        val n = c.eval(c.Expr[Int](c untypecheck i))
-        if (n < max) q"new $LessThanSym[$nTypeTag]($i)"
+        if (n < max) {
+          val r = q"new $LessThanSym[$maxTpe]($i)"
+          println(r)
+          r
+        }
         else c.abort(i.pos, s"$i >= $max")
       } catch {
         case e: Exception => c.abort(i.pos, s"Value of int $i is unkown. You must use a literal here.")
