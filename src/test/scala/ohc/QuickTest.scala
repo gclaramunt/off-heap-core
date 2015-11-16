@@ -71,6 +71,7 @@ object QuickTest extends App {
 
       val index = new support.Nat.LessThan[arr.Length]((math.random * 100).toInt)
       val p2 = arr(index)
+      arr(10)
       illTyped("Point(arr(1000002))")
       p2.x = randomInt()
       p2.y = randomInt()

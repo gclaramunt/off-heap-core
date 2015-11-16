@@ -67,7 +67,7 @@ class StructMacros(val c: Context) {
           val position = offset
           val setterMods = if (mods.hasFlag(Flag.MUTABLE)) NoMods else Modifiers(NoFlags, tpname)
           val accessors = q"def $name(implicit a: $allocatorGenericParam) = a.memory.${TermName("get" + tpe)}(_ptr + $position)" +:
-          Seq(q"$setterMods def ${TermName(name + "_=")}(v: $tpe)(implicit a: $allocatorGenericParam) = a.memory.${TermName("set" + tpe)}(_ptr + $position, v)")
+          Seq(q"$setterMods def ${TermName(name + "_$eq")}(v: $tpe)(implicit a: $allocatorGenericParam) = a.memory.${TermName("set" + tpe)}(_ptr + $position, v)")
           (offset + typeSize, accum ++ accessors)
         } else {
           c.error(t.pos, "Unsized type " + tpe)
@@ -93,7 +93,7 @@ class StructMacros(val c: Context) {
 
       val q"$mods object $tpname extends { ..$earlydefns } with ..$parents { $self => ..$stats }" = companion
 
-      val fieldAssignations = params map (p => q"""res.${TermName(p.name.decodedName.toString + "_=")}(${p.name})""")
+      val fieldAssignations = params map (p => q"""res.${TermName(p.name.decodedName.toString + "_$eq")}(${p.name})""")
       val applyBody = q"""
         val res = $tpname()
         ..$fieldAssignations

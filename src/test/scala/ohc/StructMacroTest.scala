@@ -25,6 +25,7 @@ object StructMacroTest {
     val p = Point(4, 65)
     val Point(a, b) = p
     p.asTuple
+    p.x = 23
 
     val pixel = Pixel(0, 0, 0)
 
