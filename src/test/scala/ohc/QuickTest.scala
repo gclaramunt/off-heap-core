@@ -1,5 +1,6 @@
 package ohc
 
+import shapeless.syntax.singleton._
 import shapeless.test.illTyped
 import shapeless.tag._
 /**
@@ -16,7 +17,7 @@ object QuickTest extends App {
   object Point extends StructDef[Point] {
     def apply[A <: Allocator[A]]()(implicit allocator) = new Point[A](allocator allocate size)
     def apply[A <: Allocator[A]](ptr) = new Point[A](ptr)
-    def size: Long = 8
+    def size = 8.narrow
 
     implicit val structDef = this
 

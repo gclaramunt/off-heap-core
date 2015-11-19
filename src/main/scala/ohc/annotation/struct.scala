@@ -59,15 +59,15 @@ class StructMacros(val c: Context) {
     }
 
     // fold the params obtaining getters and setters
-    val (totalSize: Int, gettersAndSetters: Seq[Tree]) = params.foldLeft((0, Seq[Tree]())) {
-      case ((offset, accum), t@ValDef(mods, name, tpe, rhs)) =>
+    val (totalSize: Int, accessors: Seq[Tree]) = params.zipWithIndex.foldLeft((0, Seq[Tree]())) {
+      case ((offset, accum), (t@ValDef(mods, name, tpe, rhs), fieldIndex)) =>
         val paramTpe = c.typecheck(tpe, c.TYPEmode, silent = true).tpe
         if (TypeSize.isDefinedAt(paramTpe)) {
           val typeSize = TypeSize(paramTpe)
           val position = offset
           val setterMods = if (mods.hasFlag(Flag.MUTABLE)) NoMods else Modifiers(NoFlags, tpname)
-          val accessors = q"def $name(implicit a: $allocatorGenericParam) = a.memory.${TermName("get" + tpe)}(_ptr + $position)" +:
-          Seq(q"$setterMods def ${TermName(name + "_$eq")}(v: $tpe)(implicit a: $allocatorGenericParam) = a.memory.${TermName("set" + tpe)}(_ptr + $position, v)")
+          val accessors = Seq(q"def $name(implicit a: $allocatorGenericParam) = a.memory.${TermName("get" + tpe)}(_ptr + $position)",
+                              q"$setterMods def ${TermName(name + "_$eq")}(v: $tpe)(implicit a: $allocatorGenericParam) = a.memory.${TermName("set" + tpe)}(_ptr + $position, v)")
           (offset + typeSize, accum ++ accessors)
         } else {
           c.error(t.pos, "Unsized type " + tpe)
@@ -82,7 +82,9 @@ class StructMacros(val c: Context) {
       }
       q"""
         $mods class $tpname[$allocatorGenericParam <: _root_.ohc.Allocator[$allocatorGenericParam]](val _ptr: _root_.shapeless.tag.@@[Long, $allocatorGenericParam]) extends ..$totalParents {
-          ..${gettersAndSetters}
+          import scala.language.experimental.macros
+
+          ..${accessors}
 
           ..$stats
         }
@@ -109,13 +111,15 @@ class StructMacros(val c: Context) {
         tpe =:= definitions.ObjectTpe || tpe =:= definitions.AnyRefTpe
       }
 
+      val totalSizeTree = c.typecheck(Literal(Constant(totalSize)))
+
       q"""
       $mods object $tpname extends {..$earlydefns} with ..$newParents {
         ..$stats
 
         def apply[A <: _root_.ohc.Allocator[A]]()(implicit allocator: A): ${tpname.toTypeName}[A] = new ${tpname.toTypeName}[A](allocator allocate size)
         def apply[A <: _root_.ohc.Allocator[A]](ptr: _root_.shapeless.tag.@@[Long, A]): ${tpname.toTypeName}[A] = new ${tpname.toTypeName}[A](ptr)
-        def size: Long = $totalSize
+        def size: ${totalSizeTree.tpe} = $totalSizeTree
 
         implicit val structDef = this
 

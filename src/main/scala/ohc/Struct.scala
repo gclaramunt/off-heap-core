@@ -10,7 +10,7 @@ trait StructDef[T[X <: Allocator[X]] <: Struct[X]] extends Any {
    * Low level initializer given a memory address.
    */
   def apply[A <: Allocator[A]](ptr: Long @@ A): T[A]
-  def size: Long
+  def size: Int
 }
 
 trait Struct[A <: Allocator[A]] extends Any {
