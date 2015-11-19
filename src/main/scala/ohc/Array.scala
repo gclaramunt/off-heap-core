@@ -16,8 +16,8 @@ class Array[A <: Allocator[A], S[X <: Allocator[X]] <: Struct[X], N <: Nat](val 
   def apply(index: Int)(implicit sd: StructDef[S]): S[A] = macro support.ArrayMacros.getStructFromIndex
   def length(implicit nDim: ToInt[Length]) = nDim()
 
-  def fold[T](initValue: T)(f: (T, S[A]) => T): T = macro support.ArrayMacros.fold[T]
-  def foreach(f: S[A] => Unit): Unit = macro support.ArrayMacros.foreach
+  def fold[T](initValue: T)(f: (T, S[A], Int) => T): T = macro support.ArrayMacros.fold[T]
+  def foreach(f: (S[A], Int) => Unit): Unit = macro support.ArrayMacros.foreach
 }
 
 

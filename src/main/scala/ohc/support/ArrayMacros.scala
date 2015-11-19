@@ -13,11 +13,11 @@ class ArrayMacros(val c: scala.reflect.macros.blackbox.Context) {
 
   def fold[S](initValue: Tree)(f: Tree)(implicit stateTT: WeakTypeTag[S]): Tree = {
     val stateTerm = c.freshName(TermName("state"))
-    val it = c.freshName(TermName("i"))
     val size = c.freshName(TermName("size"))
     val noState = stateTT.tpe =:= definitions.UnitTpe
 
-    val (state, value, expr) = c.untypecheck(f).collect { case f@q"($state, $value) => $expr" => (state, value, expr) }.head
+    val (state, value, index, expr) = c.untypecheck(f).collect { case f@q"($state, $value, $index) => $expr" => (state, value, index, expr) }.head
+    val it = index.name
 
     //optimize the case where state is Unit, so nothing is used, this is useful for other higher other methods such as foreach
     val declareState = if (noState) q"" else q"var $stateTerm = $initValue"
@@ -39,7 +39,7 @@ class ArrayMacros(val c: scala.reflect.macros.blackbox.Context) {
   }
 
   def foreach(f: Tree): Tree = {
-    val (value, expr) = c.untypecheck(f).collect { case f@q"($value) => $expr" => (value, expr) }.head
-    q"""$arr.fold(())((state, $value) => $expr)"""
+    val (value, idx, expr) = c.untypecheck(f).collect { case f@q"($value, $idx) => $expr" => (value, idx, expr) }.head
+    q"""$arr.fold(())((state, $value, $idx) => $expr)"""
   }
 }

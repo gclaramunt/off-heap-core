@@ -15,7 +15,7 @@ class ArrayOperationsBenchmark {
   private def reps(rep: Nat)(implicit toInt: ToInt[rep.N], ev: index.N LE rep.N) = {
     stack.contextualized { implicit c =>
       val arr = Array(rep, Point)
-      arr.foreach { point =>
+      arr.foreach { (point, i) =>
         point.x = 5
         point.y = 8
       }
@@ -28,7 +28,7 @@ class ArrayOperationsBenchmark {
   def measureForeach() = {
     stack.contextualized { implicit c =>
       val arr = Array(10000, Point)
-      arr.foreach { point =>
+      arr.foreach { (point, i) =>
         point.x = 5
         point.y = 8
       }
@@ -41,7 +41,7 @@ class ArrayOperationsBenchmark {
   def measureFold() = {
     stack.contextualized { implicit c =>
       val arr = Array(10000, Point)
-      arr.fold(0.0) { (accum, point) =>
+      arr.fold(0.0) { (accum, point, i) =>
         point.x = 5
         point.y = 8
         accum + point.y
