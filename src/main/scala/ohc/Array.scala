@@ -11,9 +11,13 @@ class Array[A <: Allocator[A], S[X <: Allocator[X]] <: Struct[X], N <: Nat](val 
   /**
    * Syntactic rewrite to StructDef(arr.offset(m)). See offset.
    */
-  def apply(lessThan: LessThan[_])(implicit sd: StructDef[S]): S[A] = macro support.ArrayMacros.getStructFromLessThan
+  def apply[N <: Nat](lessThan: LessThan[N])(implicit sd: StructDef[S], eq: N LE Length): S[A] = macro support.ArrayMacros.getStructFromLessThan[N]
+  def apply(n: Nat)(implicit sd: StructDef[S], toInt: ToInt[n.N], eq: n.N LE Length): S[A] = macro support.ArrayMacros.getStructFromNat
   def apply(index: Int)(implicit sd: StructDef[S]): S[A] = macro support.ArrayMacros.getStructFromIndex
   def length(implicit nDim: ToInt[Length]) = nDim()
+
+  def fold[T](initValue: T)(f: (T, S[A]) => T): T = macro support.ArrayMacros.fold[T]
+  def foreach(f: S[A] => Unit): Unit = macro support.ArrayMacros.foreach
 }
 
 

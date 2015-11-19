@@ -23,5 +23,8 @@ object StructMacroTest {
 
     val arr = Array(100, Pixel)
     arr(Point.size)
+    arr.fold(34)((state, pixel) => state + pixel.b)
+
+    arr foreach println
   }
 }
