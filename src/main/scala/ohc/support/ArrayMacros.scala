@@ -11,7 +11,7 @@ class ArrayMacros(val c: scala.reflect.macros.blackbox.Context) {
   def getStructFromNat(n: Tree)(sd: Tree, toInt: Tree, eq: Tree): Tree = q"$sd($arr.offset(new _root_.ohc.support.Nat.LessThan[${n}.N]($toInt()))($sd, null))"
   def getStructFromIndex(index: Tree)(sd: Tree): Tree = q"$sd($arr.offset(_root_.ohc.support.Nat.nat2LessThan[$arr.Length](_root_.ohc.support.Nat.int2Nat($index))))"
 
-  def fold[S](initValue: Tree)(f: Tree)(implicit stateTT: WeakTypeTag[S]): Tree = {
+  def foldWithIndex[S](initValue: Tree)(f: Tree)(implicit stateTT: WeakTypeTag[S]): Tree = {
     val stateTerm = c.freshName(TermName("state"))
     val size = c.freshName(TermName("size"))
     val noState = stateTT.tpe =:= definitions.UnitTpe
@@ -22,7 +22,7 @@ class ArrayMacros(val c: scala.reflect.macros.blackbox.Context) {
     //optimize the case where state is Unit, so nothing is used, this is useful for other higher other methods such as foreach
     val declareState = if (noState) q"" else q"var $stateTerm = $initValue"
     val assignState = if(noState) q"" else q"val ${state.name} = $stateTerm"
-    val updateState = if(noState) q"" else q"$stateTerm = $expr"
+    val updateState = if(noState) q"$expr" else q"$stateTerm = $expr"
     val returnState = if(noState) q"()" else q"$stateTerm"
     val res = q"""
      $declareState
@@ -38,8 +38,17 @@ class ArrayMacros(val c: scala.reflect.macros.blackbox.Context) {
     res
   }
 
-  def foreach(f: Tree): Tree = {
+  def fold[S](initValue: Tree)(f: Tree)(implicit stateTT: WeakTypeTag[S]): Tree = {
+    val (state, value, expr) = c.untypecheck(f).collect { case f@q"($state, $value) => $expr" => (state, value, expr) }.head
+    foldWithIndex[S](initValue)(q"($state, $value, _: Int) => $expr")
+  }
+
+  def foreachWithIndex(f: Tree): Tree = {
     val (value, idx, expr) = c.untypecheck(f).collect { case f@q"($value, $idx) => $expr" => (value, idx, expr) }.head
-    q"""$arr.fold(())((state, $value, $idx) => $expr)"""
+    foldWithIndex(q"()")(q"(_: Unit, $value, $idx) => $expr")
+  }
+  def foreach(f: Tree): Tree = {
+    val (value, expr) = c.untypecheck(f).collect { case f@q"($value) => $expr" => (value, expr) }.head
+    fold[Unit](q"()")(q"(_: Unit, $value) => $expr")
   }
 }
